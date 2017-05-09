@@ -2,6 +2,12 @@ package tack
 
 import "fmt"
 
-func Hello() {
-	fmt.Println("Hello!")
+type Db struct {
+	store map[string]interface{}
+	count map[interface{}]int
+}
+
+func (db *Db) Set(name string, value interface{}) {
+	db.store[name] = value
+	db.count[value] += 1
 }
