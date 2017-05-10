@@ -11,7 +11,6 @@ import (
 
 func main() {
 	handle := tack.MakeHandler()
-	fmt.Println(handle)
 
 	scanner := bufio.NewScanner(os.Stdin)
 
@@ -23,14 +22,12 @@ func main() {
 		} else {
 			args := convertArgs(str[1:])
 
-			if resp := cmd(args...); resp != nil {
+			if resp := cmd(args...); resp == tack.ErrEnd {
+				break
+			} else if resp != nil {
 				fmt.Println(resp)
 			}
 		}
-	}
-
-	if err := scanner.Err(); err != nil {
-
 	}
 }
 

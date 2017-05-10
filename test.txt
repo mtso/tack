@@ -1,3 +1,0 @@
-GET b
-SET a 10
-END
