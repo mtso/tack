@@ -2,29 +2,42 @@ package main
 
 import (
 	"bufio"
-	"os"
-	"github.com/mtso/tack"
-
 	"fmt"
-	// "strings"
+	"os"
+	"strings"
+
+	"github.com/mtso/tack"
 )
 
 func main() {
-	db := tack.CreateDb()
+	handle := tack.MakeHandler()
+	fmt.Println(handle)
+
 	scanner := bufio.NewScanner(os.Stdin)
 
-	db.Set("hello", 4)
+	for scanner.Scan() {
+		str := strings.Split(scanner.Text(), " ")
 
-	fmt.Println(db.Get("hello"))
-	fmt.Println(db.NumEqualTo(4))
-	fmt.Println(db.NumEqualTo(5))
+		if cmd, ok := handle[strings.ToUpper(str[0])]; !ok {
+			fmt.Println("UNRECOGNIZED COMMAND")
+		} else {
+			args := convertArgs(str[1:])
 
-	// for scanner.Scan() {
-	// 	str := strings.Split(scanner.Text(), " ")
-	// 	db.Set(str[1], str[2])
-	// }
+			if resp := cmd(args...); resp != nil {
+				fmt.Println(resp)
+			}
+		}
+	}
 
 	if err := scanner.Err(); err != nil {
-		
+
 	}
+}
+
+func convertArgs(input []string) (args []interface{}) {
+	args = make([]interface{}, len(input))
+	for i := range args {
+		args[i] = interface{}(input[i])
+	}
+	return
 }
