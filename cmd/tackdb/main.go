@@ -10,31 +10,33 @@ import (
 )
 
 func main() {
-	handle := tack.MakeHandler()
+	handle := tack.CreateDb().GetCommands()
 
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for scanner.Scan() {
-		str := strings.Split(scanner.Text(), " ")
+		args := strings.Split(scanner.Text(), " ")
 
-		if cmd, ok := handle[strings.ToUpper(str[0])]; !ok {
+		if cmd, ok := handle[strings.ToUpper(args[0])]; !ok {
 			fmt.Println("UNRECOGNIZED COMMAND")
 		} else {
-			args := convertArgs(str[1:])
+			// args := convertArgs(str[1:])
 
-			if resp := cmd(args...); resp == tack.ErrEnd {
+			if resp, err := cmd(args[1:]...); err == tack.ErrEnd {
 				break
-			} else if resp != nil {
+			} else if err != nil {
+				fmt.Println(err)
+			} else if resp != "" {
 				fmt.Println(resp)
 			}
 		}
 	}
 }
 
-func convertArgs(input []string) (args []interface{}) {
-	args = make([]interface{}, len(input))
-	for i := range args {
-		args[i] = interface{}(input[i])
-	}
-	return
-}
+// func convertArgs(input []string) (args []interface{}) {
+// 	args = make([]interface{}, len(input))
+// 	for i := range args {
+// 		args[i] = interface{}(input[i])
+// 	}
+// 	return
+// }
