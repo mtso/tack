@@ -53,6 +53,29 @@ func TestDb(t *testing.T) {
 	}
 }
 
+func BenchmarkSet(b *testing.B) {
+	handle := MakeHandler()
+	set := handle["SET"]
+	for n := 0; n < b.N; n++ {
+		set(string(n+n), n)
+	}
+}
+
+// var getHandler = MakeHandler()
+// var set = handle["SET"]
+// for n := 0; n < 1000; n++ {
+// 	set(string(n + n), n)
+// }
+// func BenchmarkGet(b *testing.B) {
+// 	// handle := MakeHandler()
+// 	// set := handle["SET"]
+// 	// get := handle["GET"]
+// 	for n := 0; n < b.N; n++ {
+// 		// set(string(n + n), n)
+// 		get(string(n % 1100))
+// 	}
+// }
+
 func convertArgs(input []string) (args []interface{}) {
 	args = make([]interface{}, len(input))
 	for i := range args {
