@@ -27,9 +27,9 @@ func MakeHandler() map[string]command {
 	db := createDb()
 	return map[string]command{
 		"GET":        db.get,
-		"SET":        db.set,
+		"SET":        db.stashSet,
 		"NUMEQUALTO": db.numEqualTo,
-		"UNSET":      db.unset,
+		"UNSET":      db.stashUnset,
 		"BEGIN":      db.begin,
 		"ROLLBACK":   db.rollback,
 		"COMMIT":     db.commit,
@@ -60,20 +60,26 @@ func (db *db) numEqualTo(args ...interface{}) (count interface{}) {
 	return
 }
 
+func (db *db) stashSet(args ...interface{}) (_ interface{}) {
+	db.stash(args[0])
+	db.set(args...)
+	return
+}
+
 func (db *db) set(args ...interface{}) (_ interface{}) {
-	if len(args) < 3 {
-		db.stash(args[0])
-	}
 	db.unset(args[0])
 	db.store[args[0]] = args[1]
 	db.count[args[1]] += 1
 	return
 }
 
+func (db *db) stashUnset(args ...interface{}) (_ interface{}) {
+	db.stash(args[0])
+	db.unset(args...)
+	return
+}
+
 func (db *db) unset(args ...interface{}) (_ interface{}) {
-	if len(args) < 2 {
-		db.stash(args[0])
-	}
 	v := db.get(args[0])
 	if db.count[v] > 1 {
 		db.count[v] -= 1
@@ -97,9 +103,9 @@ func (db *db) rollback(_ ...interface{}) (_ interface{}) {
 	tx := db.block[0]
 	for k, v := range tx {
 		if v == nil {
-			db.unset(k, true)
+			db.unset(k)
 		} else {
-			db.set(k, v, true)
+			db.set(k, v)
 		}
 	}
 	db.block = db.block[1:]
