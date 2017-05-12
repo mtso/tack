@@ -14,14 +14,13 @@ func main() {
 
 	scanner := bufio.NewScanner(os.Stdin)
 
+	fmt.Printf("> ")
 	for scanner.Scan() {
 		args := strings.Split(scanner.Text(), " ")
 
 		if cmd, ok := handle[strings.ToUpper(args[0])]; !ok {
 			fmt.Println("UNRECOGNIZED COMMAND")
 		} else {
-			// args := convertArgs(str[1:])
-
 			if resp, err := cmd(args[1:]...); err == tack.ErrEnd {
 				break
 			} else if err != nil {
@@ -30,13 +29,6 @@ func main() {
 				fmt.Println(resp)
 			}
 		}
+		fmt.Printf("> ")
 	}
 }
-
-// func convertArgs(input []string) (args []interface{}) {
-// 	args = make([]interface{}, len(input))
-// 	for i := range args {
-// 		args[i] = interface{}(input[i])
-// 	}
-// 	return
-// }
