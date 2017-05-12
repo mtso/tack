@@ -1,4 +1,33 @@
-SET a 50
-GET a
-MEMUSE
-MAXMEM 5000
+memuse
+memusedata
+set a 50
+memusedata
+begin
+memusedata
+set a 60
+memusedata
+memusedata
+get a
+begin
+memusedata
+set a 70
+memusedata
+rollback
+get a
+memusedata
+unset a
+memusedata
+rollback
+get a
+memusedata
+unset a
+memusedata
+begin
+set a 50
+begin set a 60
+commit
+get a
+rollback
+memusedata
+unset a
+memusedata
