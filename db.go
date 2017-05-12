@@ -19,11 +19,11 @@ type memdata [2]int
 type dataset map[string]entry
 
 type db struct {
-	maxMemory        uint64
-	totalMemory      uint64
-	dataMemory       uint64
-	// blockMemory      uint64
-	// blockDataMemory  uint64
+	maxMemory        int64
+	totalMemory      int64
+	dataMemory       int64
+	// blockMemory      int64
+	// blockDataMemory  int64
 	maxMemorySamples int
 
 	store    dataset
@@ -55,9 +55,9 @@ func (db *db) GetCommands() map[string]command {
 		},
 		"GET":        db.get,
 		"NUMEQUALTO": db.numEqualTo,
-		// "BEGIN":      db.begin,
-		// "ROLLBACK":   db.rollback,
-		// "COMMIT":     db.commit,
+		"BEGIN":      db.begin,
+		"ROLLBACK":   db.rollback,
+		"COMMIT":     db.commit,
 		"END":        end,
 		"MEMUSE":     db.memUse,
 		"MEMUSEDATA": db.memUseData,
@@ -98,7 +98,7 @@ func (db *db) setMaxMem(args ...string) (string, error) {
 	} else if mem <= 0 {
 		db.maxMemory = 0
 	} else {
-		db.maxMemory = uint64(mem)
+		db.maxMemory = int64(mem)
 	}
 	return "", nil
 }
@@ -123,17 +123,17 @@ func (db *db) memUseData(_ ...string) (string, error) {
 	return fmt.Sprintf("%v", db.dataMemory), nil
 }
 
-func (db *db) addMem(total, data uint64) {
+func (db *db) addMem(total, data int64) {
 	db.totalMemory += total
 	db.dataMemory += data
 }
 
-func calcMem(key string, ent entry) (total uint64, data uint64) {
+func calcMem(key string, ent entry) (total int64, data int64) {
 	keyMem := len(key)
 	// Key and value memory size.
-	data = uint64(ent.getValueMem() + keyMem)
+	data = int64(ent.getValueMem() + keyMem)
 	// Total memory: key and entry (time and string) memory size.
-	total = uint64(ent.getMem() + keyMem)
+	total = int64(ent.getMem() + keyMem)
 	return
 }
 
@@ -163,7 +163,7 @@ func (db *db) set(name, value string) (string, error) {
 	// Add count's key and value mem size.
 	if _, exists := db.count[value]; !exists {
 		valueMem := len(value)
-		totalMem += uint64(valueMem + 4)
+		totalMem += int64(valueMem + 4)
 	}
 	db.addMem(totalMem, dataMem)
 
@@ -185,7 +185,7 @@ func (db *db) unset(name string) (string, error) {
 		delete(db.store, name)
 	} else {
 		// Add key and value size of entry in count table.
-		totalMem += uint64(len(found.value) + 4)
+		totalMem += int64(len(found.value) + 4)
 		delete(db.count, found.value)
 		delete(db.store, name)
 	}
@@ -206,72 +206,72 @@ func (db *db) stash(key string) {
 			totalMem, dataMem := calcMem(key, prev)
 			db.addMem(totalMem, dataMem)
 		} else {
-			keyMem := uint64(len(key))
+			keyMem := int64(len(key))
 			db.addMem(keyMem, 0)
 		}
 		tx[key] = prev
 	}
 }
 
-// func (db *db) begin(_ ...string) (string, error) {
-// 	if db.maxMemory > 0 && db.totalMemory < db.maxMemory {
-// 		return "", ErrNoMemory
-// 	}
-// 	db.block = append([]dataset{make(dataset)}, db.block...)
-// 	return "", nil
-// }
+func (db *db) begin(_ ...string) (string, error) {
+	if db.maxMemory > 0 && db.totalMemory < db.maxMemory {
+		return "", ErrNoMemory
+	}
+	db.block = append([]dataset{make(dataset)}, db.block...)
+	return "", nil
+}
 
-// func (db *db) rollback(_ ...string) (string, error) {
-// 	if len(db.block) < 1 {
-// 		return "", ErrNoTransaction
-// 	}
-// 	tx := db.block[0]
-// 	for k, e := range tx {
-// 		if e.value == "" {
-// 			db.unset(k)
-// 			keyMem := uint64(len(k))
-// 			db.addMem(-keyMem, -keyMem)
-// 		} else {
-// 			db.set(k, e.value)
-// 			totalMem, dataMem := calcMem(k, e)
-// 			db.addMem(-totalMem, -dataMem)
-// 		}
-// 	}
-// 	db.block = db.block[1:]
-// 	return "", nil
-// }
+func (db *db) rollback(_ ...string) (string, error) {
+	if len(db.block) < 1 {
+		return "", ErrNoTransaction
+	}
+	tx := db.block[0]
+	for k, e := range tx {
+		if e.value == "" {
+			db.unset(k)
+			keyMem := int64(len(k))
+			db.addMem(-keyMem, -keyMem)
+		} else {
+			db.set(k, e.value)
+			totalMem, dataMem := calcMem(k, e)
+			db.addMem(-totalMem, -dataMem)
+		}
+	}
+	db.block = db.block[1:]
+	return "", nil
+}
 
-// func (db *db) commit(_ ...string) (string, error) {
-// 	blocklen := len(db.block)
-// 	if blocklen < 1 {
-// 		return "", ErrNoTransaction
-// 	}
+func (db *db) commit(_ ...string) (string, error) {
+	blocklen := len(db.block)
+	if blocklen < 1 {
+		return "", ErrNoTransaction
+	}
 
-// 	done := make(chan byte)
+	done := make(chan byte)
 
-// 	for _, tx := range db.block {
-// 		go func() {
-// 			for k, e := range tx {
-// 				if e.value == "" {
-// 					keyMem := uint64(len(k))
-// 					db.addMem(-keyMem, 0)
-// 				} else {
-// 					totalMem, dataMem := calcMem(k, e)
-// 					db.addMem(-totalMem, -dataMem)
-// 				}
-// 			}
-// 			done <- 1
-// 		}()
-// 	}
+	for _, tx := range db.block {
+		go func() {
+			for k, e := range tx {
+				if e.value == "" {
+					keyMem := int64(len(k))
+					db.addMem(-keyMem, 0)
+				} else {
+					totalMem, dataMem := calcMem(k, e)
+					db.addMem(-totalMem, -dataMem)
+				}
+			}
+			done <- 1
+		}()
+	}
 
-// 	for i := 0; i < blocklen; i++ {
-// 		<-done
-// 	}
+	for i := 0; i < blocklen; i++ {
+		<-done
+	}
 
-// 	db.block = nil
+	db.block = nil
 
-// 	return "", nil
-// }
+	return "", nil
+}
 
 func end(_ ...string) (string, error) {
 	return "", ErrEnd
