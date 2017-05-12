@@ -1,7 +1,7 @@
 package tack
 
 type entry struct {
-	hit int64
+	hit   int64
 	value string
 }
 

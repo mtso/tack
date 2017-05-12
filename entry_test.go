@@ -4,7 +4,7 @@ import "testing"
 import "time"
 
 func TestEntryMemUse(t *testing.T) {
-	e := entry {
+	e := entry{
 		time.Now().UnixNano(),
 		"foo",
 	}

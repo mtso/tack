@@ -1,6 +1,7 @@
 package tack
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -16,7 +17,7 @@ func TestDb(t *testing.T) {
 		},
 		{
 			"SET a 10\nSET b 10\nNUMEQUALTO 10\nNUMEQUALTO 20\nSET b 30\nNUMEQUALTO 10\nEND",
-			[]interface{}{nil, nil, 2, 0, nil, 1, ErrEnd},
+			[]interface{}{nil, nil, "2", "0", nil, "1", ErrEnd},
 		},
 		{
 			"BEGIN\nSET a 10\nGET a\nBEGIN\nSET a 20\nGET a\nROLLBACK\nGET a\nROLLBACK\nGET a\nEND",
@@ -32,21 +33,20 @@ func TestDb(t *testing.T) {
 		},
 		{
 			"SET a 10\nBEGIN\nNUMEQUALTO 10\nBEGIN\nUNSET a\nNUMEQUALTO 10\nROLLBACK\nNUMEQUALTO 10\nCOMMIT\nEND",
-			[]interface{}{nil, nil, 1, nil, nil, 0, nil, 1, nil, ErrEnd},
+			[]interface{}{nil, nil, "1", nil, nil, "0", nil, "1", nil, ErrEnd},
 		},
 	}
 
 	for _, testcase := range testcases {
-		handle := MakeHandler()
+		handle := CreateDb().GetCommands()
 		inputs := strings.Split(testcase.in, "\n")
 
 		for i, input := range inputs {
 			raw := strings.Split(input, " ")
 			cmd := handle[raw[0]]
-			arg := convertArgs(raw[1:])
-			got := cmd(arg...)
+			got, err := cmd(raw[1:]...)
 
-			if got != testcase.want[i] {
+			if got != testcase.want[i] && err != testcase.want[i] {
 				t.Errorf("Expected %q => %q, but got %q", input, got, testcase.want[i])
 			}
 		}
@@ -54,10 +54,10 @@ func TestDb(t *testing.T) {
 }
 
 func BenchmarkSet(b *testing.B) {
-	handle := MakeHandler()
+	handle := CreateDb().GetCommands()
 	set := handle["SET"]
 	for n := 0; n < b.N; n++ {
-		set(string(n+n), n)
+		set(fmt.Sprintf("%v", n+n), fmt.Sprintf("%v", n))
 	}
 }
 

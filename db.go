@@ -17,16 +17,16 @@ type memdata [2]int
 type dataset map[string]entry
 
 type db struct {
-	maxMemory uint64
-	totalMemory uint64
-	dataMemory uint64
-	blockMemory uint64
-	blockDataMemory uint64
+	maxMemory        uint64
+	totalMemory      uint64
+	dataMemory       uint64
+	blockMemory      uint64
+	blockDataMemory  uint64
 	maxMemorySamples int
 
-	store dataset
-	count map[string]uint
-	block []dataset
+	store    dataset
+	count    map[string]uint
+	block    []dataset
 	commands map[string]command
 }
 
@@ -57,7 +57,7 @@ func (db *db) GetCommands() map[string]command {
 		"ROLLBACK":   db.rollback,
 		"COMMIT":     db.commit,
 		"END":        end,
-		"MEMUSE": db.memUse,
+		"MEMUSE":     db.memUse,
 		"MEMUSEDATA": db.memUseData,
 	}
 	return db.commands
@@ -65,8 +65,8 @@ func (db *db) GetCommands() map[string]command {
 
 func CreateDb() *db {
 	return &db{
-		store: make(dataset),
-		count: make(map[string]uint),
+		store:       make(dataset),
+		count:       make(map[string]uint),
 		totalMemory: 8 + 8 + 8 + 4,
 	}
 }
@@ -95,7 +95,7 @@ func (db *db) numEqualTo(args ...string) (string, error) {
 
 func (db *db) set(name, value string) (string, error) {
 	db.unset(name)
-	
+
 	e := entry{
 		time.Now().UnixNano(),
 		value,
@@ -223,7 +223,7 @@ func (db *db) commit(_ ...string) (string, error) {
 	for i := 0; i < blocklen; i++ {
 		<-done
 	}
-	
+
 	db.block = nil
 
 	return "", nil
