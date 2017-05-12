@@ -6,10 +6,14 @@ type entry struct {
 }
 
 // Calculates the total memory usage including the hit timestamp.
-func (d entry) getMem() int {
-	return len(d.value) + 8
+func (e *entry) getMem() int {
+	return len(e.value) + 8
 }
 
-func (d entry) getValueMem() int {
-	return len(d.value)
+func (e *entry) getValueMem() int {
+	return len(e.value)
+}
+
+func (e *entry) setHit(nsec int64) {
+	e.hit = nsec
 }
